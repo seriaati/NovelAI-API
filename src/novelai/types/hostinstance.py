@@ -1,7 +1,7 @@
 from pydantic.dataclasses import dataclass
 
 
-@dataclass(frozen=True, kw_only=True, slots=True)
+@dataclass(frozen=False, kw_only=True, slots=True)
 class HostInstance:
     """
     Hostnames of NovelAI services and corresponding accepted content types.

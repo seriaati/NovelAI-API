@@ -16,6 +16,7 @@ class Host(Enum):
         url="https://api.novelai.net", accept="application/x-zip-compressed"
     )
     WEB = HostInstance(url="https://image.novelai.net", accept="binary/octet-stream")
+    CUSTOM = HostInstance(url="http://127.0.0.1:7860", accept="binary/octet-stream")
 
 
 class Endpoint(Enum):

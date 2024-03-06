@@ -27,6 +27,7 @@ Legacy branch has the same features as master branch on user side, the only diff
 
 ## Usage
 
+
 ### Initialization
 
 Import required packages and initialize a client with your NovelAI account credentials.
@@ -39,14 +40,19 @@ from novelai import NAIClient
 username = "Your NovelAI username"
 password = "Your NovelAI password"
 
+# You can also use token directly
+
 async def main():
     client = NAIClient(username, password, proxy=None)
+    # client = NAIClient(toekn="Token")
     await client.init(timeout=30)
 
 asyncio.run(main())
 ```
 
-### Image Generation
+
+
+### Image Generation (Offical API)
 
 After initializing successfully, you can generate images with the `generate_image` method. The method takes a `Metadata` object as the first argument, and an optional `host` argument to specify the backend to use.
 
@@ -58,10 +64,13 @@ The full parameter list of `Metadata` can be found in the [class definition](htt
 from novelai import Metadata, Host, Resolution
 
 async def main():
+
+    # For resolution preset, please choose between SMALL_PORTRAIT, SMALL_LANDSCAPE, SMALL_SQUARE. NORMAL_PORTRAIT, NORMAL_LANDSCAPE, NORMAL_SQUARE. Otherwise, it will charge your Opus.
     metadata = Metadata(
         prompt="1girl",
         negative_prompt="bad anatomy",
         res_preset=Resolution.NORMAL_PORTRAIT,
+        steps=28,  # please choose between 1 to 28, otherwise, it will charge Opus.
         n_samples=1,
     )
 
@@ -71,6 +80,39 @@ async def main():
     # Both of two hosts work the same for all actions mentioned below
     output = await client.generate_image(
         metadata, host=Host.WEB, verbose=False, is_opus=False
+    )
+
+    for image in output:
+        image.save(path="output images", verbose=True)
+
+asyncio.run(main())
+```
+
+### Image Generation (Unoffical API)
+
+```python
+from novelai import Metadata, Host, Resolution
+
+async def main():
+    # For resolution preset, please choose between SMALL_PORTRAIT, SMALL_LANDSCAPE, SMALL_SQUARE. NORMAL_PORTRAIT, NORMAL_LANDSCAPE, NORMAL_SQUARE. Otherwise, it will charge your Opus.
+
+    Host.CUSTOM.value.url = "http://127.0.0.1:5000"
+    client = NAIClient(token="Access Token Here")
+
+    metadata = Metadata(
+        prompt="1girl",
+        negative_prompt="bad anatomy",
+        res_preset=Resolution.NORMAL_PORTRAIT,
+        steps=28,  # please choose between 1 to 28, otherwise, it will charge Opus.
+        n_samples=1,
+    )
+
+    print(f"Estimated Anlas cost: {metadata.calculate_cost(is_opus=False)}")
+
+    # Choose host between "Host.API", "Host.WEB", or custom Host.CUSTOM.value
+    # Both of two hosts work the same for all actions mentioned below
+    output = await client.generate_image(
+        metadata, host=Host.CUSTOM, verbose=False, is_opus=False
     )
 
     for image in output:

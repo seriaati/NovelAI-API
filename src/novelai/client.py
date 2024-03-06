@@ -38,12 +38,13 @@ class NAIClient:
 
     Parameters
     ----------
-    username: `str`
+    username: `str`, optional
         NovelAI username, usually an email address
-    password: `str`
+    password: `str`, optional
         NovelAI password
     proxy: `dict`, optional
         Proxy to use for the client
+    token: `str`, optional
     """
 
     __slots__ = [
@@ -58,11 +59,15 @@ class NAIClient:
 
     def __init__(
         self,
-        username: str,
-        password: str,
+        username: str | None = None,
+        password: str | None = None,
         proxy: dict | None = None,
+        token: str | None = None,
     ):
-        self.user = User(username=username, password=password)
+        
+        assert ((username is not None and password is not None) or token is not None), "Either 'username/password' or 'token' must be provided."
+        
+        self.user = User(username=username, password=password, token=token)
         self.proxy = proxy
         self.client: AsyncClient | None = None
         self.running: bool = False
@@ -90,9 +95,13 @@ class NAIClient:
             self.client = AsyncClient(
                 timeout=timeout, proxies=self.proxy, headers=HEADERS
             )
-            self.client.headers["Authorization"] = (
-                f"Bearer {await self.get_access_token()}"
-            )
+            
+            if self.user.token:
+                self.client.headers["Authorization"] = f"Bearer {self.user.token}"
+            else:
+                self.client.headers["Authorization"] = (
+                    f"Bearer {await self.get_access_token()}"
+                )
 
             self.running = True
             logger.success("NovelAI client initialized successfully.")
@@ -205,15 +214,19 @@ class NAIClient:
             await self.reset_close_task()
 
         try:
+            
+            json_body = {
+                "input": metadata.prompt,
+                "model": metadata.model.value,
+                "action": metadata.action.value,
+                "parameters": metadata.model_dump(mode="json", exclude_none=True),
+            }
+            
             response = await self.client.post(
                 url=f"{host.value.url}{Endpoint.IMAGE.value}",
-                json={
-                    "input": metadata.prompt,
-                    "model": metadata.model.value,
-                    "action": metadata.action.value,
-                    "parameters": metadata.model_dump(mode="json", exclude_none=True),
-                },
+                json=json_body,
             )
+            
         except ReadTimeout:
             raise TimeoutError(
                 "Request timed out, please try again. If the problem persists, consider setting a higher `timeout` value when initiating NAIClient."
@@ -226,7 +239,7 @@ class NAIClient:
             raise
 
         assert (
-            response.headers["Content-Type"] == host.value.accept
+            response.headers["Content-Type"] == 'application/x-zip-compressed' or response.headers["Content-Type"] == 'binary/octet-stream'
         ), f"Invalid response content type. Expected '{host.value.accept}', got '{response.headers['Content-Type']}'."
 
         return [
