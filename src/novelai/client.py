@@ -64,9 +64,13 @@ class NAIClient:
         proxy: dict | None = None,
         token: str | None = None,
     ):
-        
-        assert ((username is not None and password is not None) or token is not None), "Either 'username/password' or 'token' must be provided."
-        
+
+        assert (
+            username is not None and password is not None
+        ) or token is not None, (
+            "Either 'username/password' or 'token' must be provided."
+        )
+
         self.user = User(username=username, password=password, token=token)
         self.proxy = proxy
         self.client: AsyncClient | None = None
@@ -95,7 +99,7 @@ class NAIClient:
             self.client = AsyncClient(
                 timeout=timeout, proxies=self.proxy, headers=HEADERS
             )
-            
+
             if self.user.token:
                 self.client.headers["Authorization"] = f"Bearer {self.user.token}"
             else:
@@ -214,19 +218,19 @@ class NAIClient:
             await self.reset_close_task()
 
         try:
-            
+
             json_body = {
                 "input": metadata.prompt,
                 "model": metadata.model.value,
                 "action": metadata.action.value,
                 "parameters": metadata.model_dump(mode="json", exclude_none=True),
             }
-            
+
             response = await self.client.post(
                 url=f"{host.value.url}{Endpoint.IMAGE.value}",
                 json=json_body,
             )
-            
+
         except ReadTimeout:
             raise TimeoutError(
                 "Request timed out, please try again. If the problem persists, consider setting a higher `timeout` value when initiating NAIClient."
@@ -239,10 +243,15 @@ class NAIClient:
             raise
 
         assert (
-            response.headers["Content-Type"] == 'application/x-zip-compressed' or response.headers["Content-Type"] == 'binary/octet-stream'
+            response.headers["Content-Type"] == "application/x-zip-compressed"
+            or response.headers["Content-Type"] == "binary/octet-stream"
         ), f"Invalid response content type. Expected '{host.value.accept}', got '{response.headers['Content-Type']}'."
 
         return [
-            Image(filename=f"{datetime.now().strftime("%Y%m%d_%H%M%S")}_{host.name.lower()}_p{i}.png", data=data, metadata=metadata)
+            Image(
+                filename=f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{host.name.lower()}_p{i}.png",
+                data=data,
+                metadata=metadata,
+            )
             for i, data in enumerate(ResponseParser(response).parse_zip_content())
         ]
