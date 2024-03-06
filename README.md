@@ -14,16 +14,11 @@ A lightweight asynchronous Python wrapper for NovelAI image generation API.
 Install with pip:
 
 ```sh
-pip install novelai
+pip install git+https://github.com/kokosensei/NovelAI-API.git
 ```
 
 Note that this package requires Python **3.12** or higher. For Python 3.7-3.11, install the legacy version instead:
 
-```sh
-pip install novelai-legacy
-```
-
-Legacy branch has the same features as master branch on user side, the only difference is code compatibility.
 
 ## Usage
 
