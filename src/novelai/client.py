@@ -97,7 +97,7 @@ class NAIClient:
         """
         try:
             self.client = AsyncClient(
-                timeout=timeout, proxies=self.proxy, headers=HEADERS
+                timeout=timeout, proxy=self.proxy, headers=HEADERS
             )
 
             if self.user.token:
